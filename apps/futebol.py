@@ -47,7 +47,8 @@ def pag_1():
         st.session_state['partida_selecionada'] = None
 
     st.title(pag_1_title)
-    st.write('Texto introdutório')
+    st.image('https://t4.ftcdn.net/jpg/00/86/41/89/360_F_86418998_mQ7NZfxcfR1hK1PDbVDSUkr6TFZbNRc0.jpg')
+    st.write('Aplicativo para analisar estatísticas de determinadas partidas ou jogadores de futebol.')
 
 
 def pag_2():
