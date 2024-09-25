@@ -5,8 +5,8 @@ from statsbombpy import sb
 
 
 pag_1_title = 'Introdução'
-pag_2_title = 'Selecionar uma Partida'
-pag_3_title = 'Estatísticas'
+pag_2_title = 'Visualizar uma Partida'
+pag_3_title = 'Comparações'
 
 
 @st.cache_data
@@ -80,7 +80,26 @@ def pag_2():
 
 def pag_3():
     st.title(pag_3_title)
-    exibir_partida(st.session_state['partidas'], st.session_state['partida_selecionada'])
+    competition_id = 43
+    season_id = 106
+    copa = sb.matches(competition_id, season_id)
+
+    filtro_selecao = st.selectbox(label='Selecione uma seleção:', options=sorted(pd.unique(copa[['home_team', 'away_team']].values.ravel())))
+    jogadores_selecao = []
+    for id_partida in copa[(copa['home_team'] == filtro_selecao) | (copa['away_team'] == filtro_selecao)]['match_id']:
+        for time, jogadores in sb.lineups(match_id=id_partida).items():
+            if time == filtro_selecao:
+                for jogador in jogadores['player_name']:
+                    if jogador not in jogadores_selecao:
+                        jogadores_selecao.append(jogador)
+
+    filtro_jogador = st.selectbox(label='Selecione um jogador:', options=sorted(jogadores_selecao))
+    total_gols = 0
+    for id_partida in copa[(copa['home_team'] == filtro_selecao) | (copa['away_team'] == filtro_selecao)]['match_id']:      
+        partida = sb.events(match_id=id_partida)
+        gols = partida[(partida['shot_outcome'] == 'Goal') & (partida['player'] == filtro_jogador)].shape[0]
+        total_gols += gols
+    st.markdown(f'{filtro_jogador} marcou {total_gols} gol(s) na Copa do Mundo de 2022')
 
 
 st.sidebar.title('Navegação')
