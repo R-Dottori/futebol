@@ -1,0 +1,7 @@
+jupyter
+matplotlib
+mplsoccer
+pandas
+seaborn
+statsbombpy
+streamlit
