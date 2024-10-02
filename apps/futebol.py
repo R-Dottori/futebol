@@ -59,8 +59,12 @@ def estatisticas(filtro, eventos, metodo='time'):
     passes_completados = total_passes[total_passes['pass_outcome'].isna()]
     passes_percentual = len(passes_completados) / len(total_passes) * 100 if len(total_passes) > 0 else 0
     faltas = eventos_sel[eventos_sel['type'] == 'Foul Committed']
-    cartoes_amarelos = eventos_sel[eventos_sel['foul_committed_card'] == 'Yellow Card']
-    cartoes_vermelhos = eventos_sel[eventos_sel['foul_committed_card'] == 'Red Card']
+    try:
+        cartoes_amarelos = eventos_sel[eventos_sel['foul_committed_card'] == 'Yellow Card'].shape[0]
+        cartoes_vermelhos = eventos_sel[eventos_sel['foul_committed_card'] == 'Red Card'].shape[0]
+    except:
+        cartoes_amarelos = 0
+        cartoes_vermelhos = 0
     impedimentos = eventos_sel[eventos_sel['type'] == 'Offside']
     escanteios = eventos_sel[eventos_sel['pass_type'] == 'Corner']
     posse_bola_total = len(eventos[eventos['type'].isin(['Pass', 'Ball Receipt', 'Duel'])])
@@ -74,8 +78,8 @@ def estatisticas(filtro, eventos, metodo='time'):
     st.metric('Passes Completados', passes_completados.shape[0])
     st.metric('Percentual de Passes Completados', f'{round(passes_percentual, 2)}%')
     st.metric('Faltas Cometidas', faltas.shape[0])
-    st.metric('Cartões Amarelos', cartoes_amarelos.shape[0])
-    st.metric('Cartões Vermelhos', cartoes_vermelhos.shape[0])
+    st.metric('Cartões Amarelos', cartoes_amarelos)
+    st.metric('Cartões Vermelhos', cartoes_vermelhos)
     st.metric('Impedimentos', impedimentos.shape[0])
     st.metric('Escanteios', escanteios.shape[0])
     st.metric('Posse de Bola', f'{round(posse_bola, 2)}%')
@@ -131,22 +135,35 @@ def pag_2():
     campeonatos = carregar_campeonatos()
 
     nomes_campeonatos = list(campeonatos['competition_name'].unique())
-    filtro_campeonato = st.selectbox(label='Selecione o campeonato:', options=nomes_campeonatos, index=st.session_state['camp_selecionado'])
+    try:
+        filtro_campeonato = st.selectbox(label='Selecione o campeonato:', options=nomes_campeonatos, index=st.session_state['camp_selecionado'])
+    except:
+        filtro_campeonato = st.selectbox(label='Selecione o campeonato:', options=nomes_campeonatos)
     st.session_state['camp_selecionado'] = nomes_campeonatos.index(filtro_campeonato)
     id_campeonato = campeonatos[campeonatos['competition_name'] == filtro_campeonato]['competition_id'].values[0]
 
     temporadas = list(campeonatos[campeonatos['competition_name'] == filtro_campeonato]['season_name'].unique())
-    filtro_temporada = st.selectbox(label='Selecione o ano ou temporada:', options=temporadas, index=st.session_state['temp_selecionada'])
+    try:
+        filtro_temporada = st.selectbox(label='Selecione o ano ou temporada:', options=temporadas, index=st.session_state['temp_selecionada'])
+    except:
+        filtro_temporada = st.selectbox(label='Selecione o ano ou temporada:', options=temporadas)
     st.session_state['temp_selecionada'] = temporadas.index(filtro_temporada)
     id_temporada = campeonatos[campeonatos['season_name'] == filtro_temporada]['season_id'].values[0]
 
     st.session_state['partidas'] = sb.matches(competition_id=id_campeonato, season_id=id_temporada)
 
-    st.session_state['id_partida'] = st.selectbox(label='Selecione a partida',
-                                        options=st.session_state['partidas']['match_id'],
-                                        index=st.session_state['partida_selecionada'],
-                                        format_func=lambda id_partida: nome_partida(st.session_state['partidas'], id_partida)
-                                        )
+    try:
+        st.session_state['id_partida'] = st.selectbox(label='Selecione a partida',
+                                            options=st.session_state['partidas']['match_id'],
+                                            index=st.session_state['partida_selecionada'],
+                                            format_func=lambda id_partida: nome_partida(st.session_state['partidas'], id_partida)
+                                            )
+    except:
+        st.session_state['id_partida'] = st.selectbox(label='Selecione a partida',
+                                            options=st.session_state['partidas']['match_id'],
+                                            format_func=lambda id_partida: nome_partida(st.session_state['partidas'], id_partida)
+                                            )
+
     st.session_state['partida_selecionada'] = int(st.session_state['partidas'][st.session_state['partidas']['match_id'] == st.session_state['id_partida']].index[0])
     st.session_state['eventos'], _ , st.session_state['pos_campo'], st.session_state['taticas'] = Sbopen().event(st.session_state['id_partida'])
 
@@ -318,8 +335,8 @@ def pag_6():
         eventos = sb.events(st.session_state['id_partida'])
 
         nomes_times = eventos['team'].unique()
-        filtro_time = st.radio(label='Escolha o time', options=nomes_times)
-        filtro_jogador = st.selectbox(label='Escolha o jogador', options=sorted(eventos[eventos['team'] == filtro_time]['player'].dropna().unique()))
+        filtro_time = st.radio(label='Escolha o time:', options=nomes_times)
+        filtro_jogador = st.selectbox(label='Escolha o jogador:', options=sorted(eventos[eventos['team'] == filtro_time]['player'].dropna().unique()))
 
         min_tempo = eventos['minute'].min() + 1
         max_tempo = eventos['minute'].max() + 1
